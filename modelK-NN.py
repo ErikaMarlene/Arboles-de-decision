@@ -14,9 +14,11 @@ import numpy as np  # linear algebra
 import math
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import classification_report
 
 df = pd.read_csv("./tumor.csv")
-# print(df.head())
 
 # ---------------- PREPROCESAMIENTO ---------------
 # checando si hay valores faltantes (no hay)
@@ -30,31 +32,25 @@ df = df.drop_duplicates()
 # Separando la data en X e y
 X = df.drop(["Sample code number", 'Class'], axis=1)
 y = df['Class']
-# separando X e y en sets de training y testing
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,
-                                                    random_state=None)
-# print(X_train.head())
-
-"""
-Haciendo escalamiento de características para mejorar el rendimiento
-del modelo ya que es sensible a la escala
-"""
-
-cols = X_train.columns
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
-X_train = pd.DataFrame(X_train, columns=[cols])
-X_test = pd.DataFrame(X_test, columns=[cols])
-# print(X_train.head())
 
 
-"""
-Función que calcula la distancia euclideana entre los puntos de test y train
-Usa todas las columnas: ('Clump Thickness','Uniformity of Cell Size'
-,'Uniformity of Cell Shape', 'Marginal Adhesion', 'Single Epithelial Cell Size'
-, 'Bare Nuclei','Bland Chromatin', 'Normal Nucleoli', 'Mitoses',)
-"""
+def comprobacion_generalizacion():
+    """
+    La función realiza pruebas de generalización dividiendo los datos en
+    conjuntos de entrenamiento y pruebas, escalando las características,
+    y luego aplicando el algoritmo de los k-vecinos más cercanos.
+    """
+    for i in range(2):
+        print("\n-------------------- CORRIDA nº", i+1, "--------------------")
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=None)
+        cols = X_train.columns
+        scaler = StandardScaler()
+        X_train = scaler.fit_transform(X_train)
+        X_test = scaler.transform(X_test)
+        X_train = pd.DataFrame(X_train, columns=[cols])
+        X_test = pd.DataFrame(X_test, columns=[cols])
+        print(knn(9, X_train, y_train, X_test, y_test))
 
 
 def euclidean_distance(test_point, train_point):
@@ -75,76 +71,67 @@ def euclidean_distance(test_point, train_point):
 
 
 # Función que simula el modelo k-NN
-def knn(k, X_train, y_train, X_test):
+def knn(k, X_train, y_train, X_test, y_test):
     """
-    La función `knn` implementa el algoritmo de los k-vecinos más cercanos para
-    predecir las categorías de los datos de prueba basándose en los vecinos más
-    cercanos en los datos de entrenamiento.
+    La función `knn` implementa el algoritmo de los k-vecinos más cercanos
+    para clasificación y evalúa su rendimiento utilizando diversas métricas.
 
-    :param k: El parámetro 'k' representa la cantidad de vecinos más cercanos a
-            considerar al hacer predicciones. En este caso,
-            está configurado en 9.
-    :param X_train: El parámetro `X_train` representa las características de
-            los datos de entrenamiento, que son las variables de entrada
-            utilizadas para entrenar el modelo KNN. Debe ser un DataFrame de
-            pandas que contenga los datos de entrenamiento.
-    :param y_train: El parámetro `y_train` representa la variable objetivo o
-            las etiquetas de los datos de entrenamiento. Contiene las
-            categorías reales para las filas correspondientes en `X_train`.
-    :param X_test: La variable `X_test` representa el conjunto de datos de
-            prueba, que contiene las características (variables independientes)
-            para las cuales queremos predecir las categorías.
-            Es un DataFrame de pandas.
-    :return: La función `knn` devuelve una lista `assigned_categories` que
-            contiene las categorías predichas para cada fila en `X_test`.
+    - `k`: El parámetro "k" representa el número de vecinos más cercanos a
+    considerar al realizar predicciones en el algoritmo de los k-vecinos
+    más cercanos. Determina cuántos vecinos se utilizarán para
+    clasificar un nuevo punto de datos.
+
+    - `X_train`: `X_train` es un DataFrame de pandas que contiene las
+    características de los datos de entrenamiento. Cada fila representa un
+    punto de datos, y cada columna representa una característica de
+    ese punto de datos.
+
+    - `y_train`: El parámetro `y_train` es la variable objetivo para el
+    conjunto de entrenamiento. Contiene las etiquetas o categorías verdaderas
+    correspondientes a las características en el conjunto
+    de entrenamiento `X_train`.
+
+    - `X_test`: `X_test` es un DataFrame de pandas que contiene las
+    características de los datos de prueba. Cada fila representa una muestra
+    de prueba, y cada columna representa una característica de esa muestra.
+    El DataFrame debe tener el mismo número de columnas que el
+    DataFrame `X_train`.
+
+    - `y_test`: El parámetro `y_test` son las etiquetas o categorías
+    verdaderas para los datos de prueba. Es una lista o arreglo que contiene
+    las categorías reales de las muestras de prueba.
+
+    La función devuelve una lista de categorías asignadas
+    para los datos de prueba.
     """
-    # Lista que contendrá todas las categorías asignadas para los
-    # valores de X_train
     assigned_categories = []
     for _, row in X_test.iterrows():
-        # Lo reinicia para cada nueva fila de X_test
         complete_row = np.array([])
         for _, test_point in row.items():
-            # Para asegurarnos de no agregar valores None
             if test_point is not None:
-                # Al terminar el ciclo 'for' 'complete_row' contendrá
-                # los 9 valores de todas las columnas
                 complete_row = np.append(complete_row, test_point)
-        # Almacena las distancias para cada fila en X_train
+
         train_distances = []
         for index_train, row_train in X_train.iterrows():
-            # Lo reinicia para cada nueva fila de X_train
             train_complete_row = np.array([])
             for _, train_point in row_train.items():
                 if train_point is not None:
-                    # Al terminar el ciclo 'for' 'train_complete_row'
-                    # contendrá los 9 valores de todas las columnas
                     train_complete_row = np.append(train_complete_row,
                                                    train_point)
-            # Calcula la distancia usando la función 'euclidean_distance'
             distance = euclidean_distance(complete_row, train_complete_row)
-            # Esta lista contiene las distancias calculadas
-            # con su respectiva categoría
             train_distances.append((distance, y_train.iloc[index_train]))
-            # O debería considerar solo distancias no nulas y no cero?
-            # if distance is not None and abs(distance) != 0.0:
 
-        # Ordena la lista basandose en las distancias
         train_distances.sort(key=lambda x: x[0])
-        # Solo usa las k distancias más cercanas
         nearests = train_distances[:k]
 
-        # Calcula cuántos "2" y cuántos "4" hay en los vecinos más cercanos
         twos = sum(1 for _, label in nearests if label == 2)
         fours = sum(1 for _, label in nearests if label == 4)
 
-        # Asigna la categoría basada en la mayoría de vecinos cercanos
         if twos > fours:
             assigned_categories.append(2)
         elif twos < fours:
             assigned_categories.append(4)
 
-    # Compara las categorías predichas con las categorías reales
     correct_predictions = 0
     incorrect_predictions = 0
     misclassified_indices = []
@@ -156,25 +143,31 @@ def knn(k, X_train, y_train, X_test):
         else:
             incorrect_predictions += 1
             misclassified_indices.append(i)
-            """
-            print("En la posición: ", i,
-                  "predijo incorrectamente", predicted,
-                  ", la categoría correcta era", actual)
-            """
 
-    print("\nEl porcentaje de predicciones correctas es de:",
-          ((correct_predictions * 100)/len(assigned_categories)), "%")
+    print("\nPrecisión del modelo k-NN score",
+          accuracy_score(y_test, assigned_categories))
+    print()
+    print(classification_report(y_test, assigned_categories))
     print("El porcentaje de predicciones incorrectas es de:",
           ((incorrect_predictions * 100)/len(assigned_categories)), "%")
-    print("Número de predicciones correctas:", correct_predictions)
-    print("Número de predicciones incorrectas:", incorrect_predictions)
     print("Índices de predicciones incorrectas:", misclassified_indices, "\n")
 
+    # Confusion matrix
+    cm = confusion_matrix(y_test, assigned_categories)
+    df1 = pd.DataFrame(columns=["2", "4"],
+                       index=["benigno", "maligno"], data=cm)
+
+    f, ax = plt.subplots(figsize=(2, 2))
+
+    sns.heatmap(df1, annot=True, cmap="Greens", fmt='.0f',
+                ax=ax, linewidths=5, cbar=False, annot_kws={"size": 14})
+    plt.xlabel("Predicted Label")
+    plt.xticks(size=10)
+    plt.yticks(size=10, rotation=0)
+    plt.ylabel("True Label")
+    plt.title("Confusion Matrix", size=10)
+    plt.show()
     return assigned_categories
 
 
-closest_labels = knn(9, X_train, y_train, X_test)
-print("Las", len(closest_labels), "variables: \n", X_test, "\n",
-      "\n Se les predijo que sus categorías son: ")
-print(closest_labels)
-print("Estas son las categorías originales: \n", y_test.to_list())
+comprobacion_generalizacion()
