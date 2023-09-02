@@ -32,7 +32,7 @@ X = df.drop(["Sample code number", 'Class'], axis=1)
 y = df['Class']
 # separando X e y en sets de training y testing
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,
-                                                    random_state=0)
+                                                    random_state=None)
 # print(X_train.head())
 
 """
@@ -58,13 +58,46 @@ Usa todas las columnas: ('Clump Thickness','Uniformity of Cell Size'
 
 
 def euclidean_distance(test_point, train_point):
-    # Usé la formula
+    """
+    La función calcula la distancia euclidiana entre dos puntos en
+    un espacio multidimensional.
+
+    :param test_point: Un array numpy que representa las coordenadas del
+                        punto de prueba.
+    :param train_point: El parámetro train_point representa un punto en un
+                        conjunto de datos de entrenamiento. Puede ser un solo
+                        punto de datos o una fila en un conjunto de datos que
+                        contiene múltiples puntos.
+    :return: la distancia euclidiana entre el test_point y el train_point.
+    """
     distance = math.sqrt(np.sum((test_point - train_point) ** 2))
     return distance
 
 
 # Función que simula el modelo k-NN
 def knn(k, X_train, y_train, X_test):
+    """
+    La función `knn` implementa el algoritmo de los k-vecinos más cercanos para
+    predecir las categorías de los datos de prueba basándose en los vecinos más
+    cercanos en los datos de entrenamiento.
+
+    :param k: El parámetro 'k' representa la cantidad de vecinos más cercanos a
+            considerar al hacer predicciones. En este caso,
+            está configurado en 9.
+    :param X_train: El parámetro `X_train` representa las características de
+            los datos de entrenamiento, que son las variables de entrada
+            utilizadas para entrenar el modelo KNN. Debe ser un DataFrame de
+            pandas que contenga los datos de entrenamiento.
+    :param y_train: El parámetro `y_train` representa la variable objetivo o
+            las etiquetas de los datos de entrenamiento. Contiene las
+            categorías reales para las filas correspondientes en `X_train`.
+    :param X_test: La variable `X_test` representa el conjunto de datos de
+            prueba, que contiene las características (variables independientes)
+            para las cuales queremos predecir las categorías.
+            Es un DataFrame de pandas.
+    :return: La función `knn` devuelve una lista `assigned_categories` que
+            contiene las categorías predichas para cada fila en `X_test`.
+    """
     # Lista que contendrá todas las categorías asignadas para los
     # valores de X_train
     assigned_categories = []
