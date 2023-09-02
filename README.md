@@ -7,3 +7,4 @@ Además contiene el archivo **modelK-NN.py** donde se encuentra el código del m
 `pip install scikit-learn`
 
 - Además deberán asegurarse de tener el archivo .csv en la misma carpeta que el código .py
+- En la segunda corrida tarda en cargar la matriz de confusión (tener paciencia)
